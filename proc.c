@@ -6,6 +6,7 @@
 #include "x86.h"
 #include "proc.h"
 #include "spinlock.h"
+#include "sysinfo.h"
 
 struct {
   struct spinlock lock;
@@ -15,6 +16,7 @@ struct {
 static struct proc *initproc;
 
 int nextpid = 1;
+uint context_switches = 0;  // Contador global de cambios de contexto
 extern void forkret(void);
 extern void trapret(void);
 
@@ -387,6 +389,7 @@ sched(void)
   if(readeflags()&FL_IF)
     panic("sched interruptible");
   intena = mycpu()->intena;
+  context_switches++;  // Incrementar contador de cambios de contexto
   swtch(&p->context, mycpu()->scheduler);
   mycpu()->intena = intena;
 }
@@ -541,4 +544,80 @@ procdump(void)
     }
     cprintf("\n");
   }
+}
+
+// Obtiene estadísticas del sistema
+int
+getsysinfo(struct sysinfo *info)
+{
+  struct proc *p;
+  
+  if(info == 0)
+    return -1;
+  
+  // Inicializar contadores
+  info->num_processes = 0;
+  info->num_runnable = 0;
+  info->num_sleeping = 0;
+  info->num_running = 0;
+  info->num_zombie = 0;
+  info->context_switches = context_switches;
+  info->uptime_ticks = ticks;
+  
+  acquire(&ptable.lock);
+  
+  // Contar procesos por estado
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+    if(p->state == UNUSED)
+      continue;
+      
+    info->num_processes++;
+    
+    switch(p->state){
+      case RUNNABLE:
+        info->num_runnable++;
+        break;
+      case SLEEPING:
+        info->num_sleeping++;
+        break;
+      case RUNNING:
+        info->num_running++;
+        break;
+      case ZOMBIE:
+        info->num_zombie++;
+        break;
+      default:
+        break;
+    }
+  }
+  
+  release(&ptable.lock);
+  return 0;
+}
+
+// Obtiene información de procesos
+int
+getprocs(struct procinfo *procs, int max)
+{
+  struct proc *p;
+  int count = 0;
+  
+  if(procs == 0 || max <= 0)
+    return -1;
+  
+  acquire(&ptable.lock);
+  
+  for(p = ptable.proc; p < &ptable.proc[NPROC] && count < max; p++){
+    if(p->state == UNUSED)
+      continue;
+      
+    procs[count].pid = p->pid;
+    procs[count].state = p->state;
+    procs[count].sz = p->sz;
+    safestrcpy(procs[count].name, p->name, sizeof(p->name));
+    count++;
+  }
+  
+  release(&ptable.lock);
+  return count;
 }

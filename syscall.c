@@ -104,6 +104,12 @@ extern int sys_wait(void);
 extern int sys_write(void);
 extern int sys_uptime(void);
 extern int sys_trace(void);
+extern int sys_sysinfo(void);
+extern int sys_getprocs(void);
+extern int sys_syscount(void);
+
+// Contador global de invocaciones por syscall
+uint syscall_counts[25];  // Tamaño suficiente para todas las syscalls
 
 // Nombres de las syscalls para el trazado
 static char *syscall_names[] = {
@@ -129,6 +135,9 @@ static char *syscall_names[] = {
 [SYS_mkdir]   "mkdir",
 [SYS_close]   "close",
 [SYS_trace]   "trace",
+[SYS_sysinfo] "sysinfo",
+[SYS_getprocs] "getprocs",
+[SYS_syscount] "syscount",
 };
 
 static int (*syscalls[])(void) = {
@@ -154,6 +163,9 @@ static int (*syscalls[])(void) = {
 [SYS_mkdir]   sys_mkdir,
 [SYS_close]   sys_close,
 [SYS_trace]   sys_trace,
+[SYS_sysinfo] sys_sysinfo,
+[SYS_getprocs] sys_getprocs,
+[SYS_syscount] sys_syscount,
 };
 
 void
@@ -164,6 +176,10 @@ syscall(void)
 
   num = curproc->tf->eax;
   if(num > 0 && num < NELEM(syscalls) && syscalls[num]) {
+    // Incrementar contador de invocaciones para esta syscall
+    if(num < NELEM(syscall_counts))
+      syscall_counts[num]++;
+    
     // Si el trazado está activo, imprimir información de la syscall
     if(curproc->trace_syscalls) {
       // Obtener argumentos de la syscall (inicializados a 0 por si argint falla)
@@ -189,4 +205,26 @@ syscall(void)
             curproc->pid, curproc->name, num);
     curproc->tf->eax = -1;
   }
+}
+
+// Obtiene el contador de invocaciones de syscalls
+// Si syscall_num == -1, copia todo el array de contadores
+int
+getsysccount(int syscall_num, uint *count_ptr)
+{
+  if(count_ptr == 0)
+    return -1;
+  
+  // Si syscall_num es -1, copiar todo el array
+  if(syscall_num == -1) {
+    memmove(count_ptr, syscall_counts, sizeof(syscall_counts));
+    return NELEM(syscall_counts);
+  }
+  
+  // Si es un número específico, validar y retornar ese contador
+  if(syscall_num < 0 || syscall_num >= NELEM(syscall_counts))
+    return -1;
+  
+  *count_ptr = syscall_counts[syscall_num];
+  return 0;
 }

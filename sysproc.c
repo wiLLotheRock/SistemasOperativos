@@ -6,6 +6,7 @@
 #include "memlayout.h"
 #include "mmu.h"
 #include "proc.h"
+#include "sysinfo.h"
 
 int
 sys_fork(void)
@@ -101,4 +102,47 @@ sys_trace(void)
   
   myproc()->trace_syscalls = enable;
   return 0;
+}
+
+// Obtiene estadísticas del sistema
+int
+sys_sysinfo(void)
+{
+  struct sysinfo *info;
+  
+  if(argptr(0, (char**)&info, sizeof(*info)) < 0)
+    return -1;
+  
+  return getsysinfo(info);
+}
+
+// Obtiene información de procesos
+int
+sys_getprocs(void)
+{
+  struct procinfo *procs;
+  int max;
+  
+  if(argptr(0, (char**)&procs, sizeof(*procs)) < 0)
+    return -1;
+  if(argint(1, &max) < 0)
+    return -1;
+    
+  return getprocs(procs, max);
+}
+
+// Obtiene el contador de invocaciones de una syscall
+// Si syscall_num == -1, copia todos los contadores
+int
+sys_syscount(void)
+{
+  int syscall_num;
+  uint *count_ptr;
+  
+  if(argint(0, &syscall_num) < 0)
+    return -1;
+  if(argptr(1, (char**)&count_ptr, sizeof(*count_ptr)) < 0)
+    return -1;
+  
+  return getsysccount(syscall_num, count_ptr);
 }

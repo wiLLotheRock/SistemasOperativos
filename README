@@ -119,3 +119,193 @@ CARACTERÍSTICAS:
   ✓ No afecta el funcionamiento normal del sistema
 
 ================================================================================
+
+================================================================================
+ENTREGABLE 2: COMANDOS DE INSPECCIÓN Y MONITOREO DEL SISTEMA
+================================================================================
+
+DESCRIPCIÓN:
+Se han implementado tres comandos nuevos para inspeccionar el estado del
+sistema, procesos y archivos en xv6, orientados a temas de gestión de
+procesos, planificación y sistema de archivos.
+
+COMANDOS IMPLEMENTADOS:
+
+1. uptime - ESTADÍSTICAS DEL SISTEMA EXTENDIDO
+   Muestra información detallada sobre el estado del sistema:
+   - Tiempo de ejecución (ticks y formato HH:MM:SS)
+   - Número de procesos por estado (total, running, runnable, sleeping, zombie)
+   - Contador de cambios de contexto del planificador
+
+2. ps - INSPECTOR DE PROCESOS
+   Lista todos los procesos activos del sistema con:
+   - PID (Process ID)
+   - Estado (embryo, sleeping, runnable, running, zombie)
+   - Tamaño de memoria (SIZE)
+   - Nombre del proceso
+
+3. lsx - LISTADO EXTENDIDO DE ARCHIVOS
+   Versión extendida de ls que muestra información detallada:
+   - Tipo (FILE, DIR, DEV)
+   - Número de inode
+   - Número de enlaces (hard links)
+   - Tamaño en bytes
+   - Nombre del archivo/directorio
+
+CASOS DE PRUEBA:
+
+1. Verificar estadísticas del sistema:
+   $ uptime
+
+2. Listar procesos en ejecución:
+   $ ps
+
+3. Ver archivos con detalle:
+   $ lsx
+
+4. Ver archivo específico:
+   $ lsx README
+
+SYSCALLS: sysinfo(), getprocs()
+ARCHIVOS NUEVOS: uptime.c, ps.c, lsx.c, sysinfo.h
+
+================================================================================
+
+================================================================================
+ENTREGABLE 3: CONTADOR DE INVOCACIONES POR SYSCALL
+================================================================================
+
+DESCRIPCIÓN:
+Se ha implementado un sistema de conteo de invocaciones para cada syscall
+del sistema. El kernel mantiene un array global que se incrementa cada vez
+que se ejecuta una syscall, y se provee un comando para consultar estos
+contadores.
+
+COMANDO IMPLEMENTADO:
+
+syscount - CONTADOR DE INVOCACIONES DE SYSCALLS
+
+  Uso sin parámetros (resumen completo):
+    $ syscount
+    Muestra una tabla con todas las syscalls y su número de invocaciones
+
+  Uso con parámetro (consulta individual):
+    $ syscount <número_syscall>
+    Muestra únicamente el contador de la syscall especificada
+
+EJEMPLOS DE USO:
+
+1. Ver resumen completo de todas las syscalls:
+
+   $ syscount
+   === CONTADORES DE SYSCALLS ===
+
+   NUM  NOMBRE            INVOCACIONES
+   ---  ----------------  ------------
+   1    fork              5
+   2    exit              4
+   5    read              127
+   7    exec              8
+   11   getpid            3
+   16   write             245
+   21   close             42
+   ...
+
+   TOTAL DE INVOCACIONES: 534
+
+2. Consultar una syscall específica:
+
+   $ syscount 16
+   Syscall #16 (write): 245 invocaciones
+
+   $ syscount 1
+   Syscall #1 (fork): 5 invocaciones
+
+3. Verificar incremento de contadores:
+
+   $ syscount 5       # read tiene X invocaciones
+   $ cat README       # Ejecutar comando que usa read
+   $ syscount 5       # read ahora tiene más invocaciones
+
+SYSCALL IMPLEMENTADA:
+
+int syscount(int syscall_num, uint *count_ptr)
+  Parámetros:
+    - syscall_num: Número de syscall a consultar, o -1 para todas
+    - count_ptr: Puntero donde escribir el/los contador(es)
+  Retorno:
+    - Si syscall_num == -1: retorna tamaño del array
+    - Si syscall_num >= 0: retorna 0 en éxito, -1 en error
+
+IMPLEMENTACIÓN:
+
+Array global en el kernel:
+  - uint syscall_counts[25]: Array que mantiene contadores
+  - Se incrementa en syscall() antes de ejecutar cada syscall
+  - Persistente durante toda la ejecución del sistema
+  - No se resetea (acumulativo)
+
+Función del kernel:
+  - getsysccount(int num, uint *ptr): Copia contador(es) a espacio usuario
+  - Validación de rangos y punteros
+  - Soporte para consulta individual o completa
+
+ARCHIVOS MODIFICADOS/CREADOS:
+
+Nuevos:
+  - syscount.c         : Comando de usuario
+
+Modificados:
+  - syscall.h          : Agregado SYS_syscount (25)
+  - syscall.c          : Agregado array syscall_counts[]
+                       : Incremento en syscall()
+                       : Implementado getsysccount()
+  - sysproc.c          : Implementado sys_syscount()
+  - defs.h             : Declaración de getsysccount()
+  - user.h             : Prototipo syscount()
+  - usys.S             : Stub de ensamblador
+  - Makefile           : Agregado _syscount a UPROGS
+
+CASOS DE PRUEBA:
+
+1. Resumen inicial después de boot:
+   $ syscount
+   Debe mostrar syscalls básicas (fork, exec, read, write)
+
+2. Consulta de syscall específica:
+   $ syscount 16
+   Debe mostrar contador de write
+
+3. Verificar incremento tras operación:
+   $ syscount 5
+   $ cat README
+   $ syscount 5
+   El contador debe haber aumentado
+
+4. Operaciones múltiples:
+   $ syscount          # Ver estado inicial
+   $ ls                # Ejecuta varias syscalls
+   $ syscount          # Ver incrementos
+
+5. Número inválido:
+   $ syscount 100
+   Debe mostrar error
+
+NOTAS TÉCNICAS:
+
+- Los contadores son acumulativos desde el boot del sistema
+- No hay forma de resetear los contadores
+- El contador de syscount() también se cuenta a sí mismo
+- Los números de syscall van de 1 a 24 (0 no se usa)
+- El array syscall_counts[25] cubre todas las syscalls actuales
+
+NÚMEROS DE SYSCALLS PRINCIPALES:
+
+ 1: fork        7: exec       13: sleep      19: link
+ 2: exit        8: fstat      14: uptime     20: mkdir
+ 3: wait        9: chdir      15: open       21: close
+ 4: pipe       10: dup        16: write      22: trace
+ 5: read       11: getpid     17: mknod      23: sysinfo
+ 6: kill       12: sbrk       18: unlink     24: getprocs
+
+================================================================================

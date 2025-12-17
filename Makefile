@@ -187,6 +187,10 @@ UPROGS=\
 	_wc\
 	_zombie\
 	_trace\
+	_uptime\
+	_ps\
+	_lsx\
+	_syscount\
 
 fs.img: mkfs README $(UPROGS)
 	./mkfs fs.img README $(UPROGS)
