@@ -1,6 +1,207 @@
 
 
 ================================================================================
+XV6 SISTEMA OPERATIVO
+================================================================================
+
+DESCRIPCIÓN DEL PROYECTO:
+
+xv6 es un sistema operativo educativo desarrollado por el MIT como una 
+reimplementación moderna de Unix Version 6. Este proyecto extiende xv6 con
+tres módulos de instrumentación, monitoreo y análisis del sistema operativo,
+diseñados para facilitar el estudio y comprensión de conceptos fundamentales
+de sistemas operativos.
+
+EXTENSIONES IMPLEMENTADAS:
+
+1. Sistema de Instrumentación de Syscalls (trace)
+   - Trazado en tiempo real de llamadas al sistema por proceso
+   - Muestra nombre de syscall, argumentos y valor de retorno
+   - Aislamiento por proceso sin afectar el resto del sistema
+
+2. Comandos de Monitoreo del Sistema (uptime, ps, lsx)
+   - uptime: Estadísticas del sistema (tiempo, procesos, context switches)
+   - ps: Inspector de procesos (PID, estado, memoria, nombre)
+   - lsx: Listado extendido de archivos (tipo, inode, links, tamaño)
+
+3. Contador de Invocaciones de Syscalls (syscount)
+   - Contabilidad global de invocaciones por syscall desde el boot
+   - Consulta individual o resumen completo de estadísticas
+   - Análisis cuantitativo del comportamiento del sistema
+
+CARACTERÍSTICAS TÉCNICAS:
+
+- 4 nuevas syscalls implementadas (trace, sysinfo, getprocs, syscount)
+- 5 comandos de usuario agregados
+- ~850 líneas de código nuevo/modificado
+- Compatible con GCC moderno y distribuciones Linux actuales
+- Documentación completa en informe.md
+
+================================================================================
+INSTRUCCIONES DE COMPILACIÓN Y EJECUCIÓN
+================================================================================
+
+REQUISITOS DEL SISTEMA:
+
+- Sistema operativo: Linux (Ubuntu, Debian, Fedora, Arch, etc.)
+- Compilador: GCC 7 o superior
+- Emulador: QEMU (qemu-system-i386)
+- Herramientas: make, objcopy, objdump
+
+INSTALACIÓN DE DEPENDENCIAS:
+
+  Ubuntu/Debian:
+    $ sudo apt-get update
+    $ sudo apt-get install build-essential qemu-system-x86 gdb
+
+  Fedora:
+    $ sudo dnf install gcc make qemu-system-x86 gdb
+
+  Arch Linux:
+    $ sudo pacman -S base-devel qemu gdb
+
+COMPILACIÓN:
+
+  1. Limpiar compilaciones anteriores (recomendado):
+     $ make clean
+
+  2. Compilar el kernel y programas de usuario:
+     $ make
+
+     Esto generará:
+     - kernel: Imagen del kernel de xv6
+     - fs.img: Sistema de archivos con todos los programas
+     - *.o: Archivos objeto compilados
+
+  3. Si hay errores de compilación, verificar versión de GCC:
+     $ gcc --version
+     (Debe ser 7.0 o superior)
+
+EJECUCIÓN:
+
+  Opción 1 - Modo gráfico (con ventana QEMU):
+    $ make qemu
+
+  Opción 2 - Modo texto (recomendado para servidores sin X11):
+    $ make qemu-nox
+
+  Opción 3 - Con soporte GDB para debugging:
+    $ make qemu-gdb
+    (En otra terminal: $ gdb kernel, luego: (gdb) target remote localhost:26000)
+
+SALIR DE QEMU:
+
+  - Presionar: Ctrl+A, luego soltar y presionar X
+  - O cerrar la ventana del emulador (si está en modo gráfico)
+
+USO DE LOS COMANDOS:
+
+  Una vez dentro de xv6 (verás el prompt '$'), puedes ejecutar:
+
+  # Trazado de syscalls
+  $ trace echo hola
+  $ trace ls
+  $ trace cat README
+
+  # Monitoreo del sistema
+  $ uptime
+  $ ps
+  $ lsx
+
+  # Contador de syscalls
+  $ syscount           # Ver todos los contadores
+  $ syscount 16        # Ver contador de syscall #16 (write)
+
+  # Comandos estándar de xv6
+  $ ls                 # Listar archivos
+  $ cat README         # Mostrar contenido de archivo
+  $ mkdir test         # Crear directorio
+  $ echo hola          # Imprimir texto
+  $ grep xv6 README    # Buscar en archivo
+
+VERIFICACIÓN DE FUNCIONAMIENTO:
+
+  1. Compilar sin errores:
+     $ make clean && make
+     (No debe mostrar errores, solo warnings menores)
+
+  2. Ejecutar y verificar boot:
+     $ make qemu-nox
+     (Debe mostrar "init: starting sh" y el prompt '$')
+
+  3. Probar cada entregable:
+     $ trace echo test      # Debe mostrar syscalls
+     $ uptime               # Debe mostrar estadísticas
+     $ ps                   # Debe listar procesos
+     $ lsx                  # Debe mostrar archivos con detalles
+     $ syscount             # Debe mostrar tabla de contadores
+
+SOLUCIÓN DE PROBLEMAS:
+
+  Problema: "make: qemu-system-i386: Command not found"
+  Solución: Instalar QEMU (ver sección de dependencias arriba)
+
+  Problema: "panic: init exiting"
+  Solución: El sistema ya está corregido. Si persiste, ejecutar:
+            $ make clean && make
+
+  Problema: Kernel muy grande (>100MB)
+  Solución: Ya está resuelto en el Makefile con flags apropiados
+
+  Problema: Warnings sobre recursión infinita en sh.c
+  Solución: Es normal, se suprime con -Wno-infinite-recursion
+
+ESTRUCTURA DEL PROYECTO:
+
+  Archivos del Kernel:
+    - kernel.ld        : Linker script del kernel
+    - main.c           : Inicialización del kernel
+    - proc.c/proc.h    : Gestión de procesos
+    - syscall.c/h      : Manejador de syscalls
+    - sysproc.c        : Implementación de syscalls de procesos
+    - trap.c           : Manejo de interrupciones y traps
+
+  Comandos de Usuario (nuevos):
+    - trace.c          : Comando para trazado de syscalls
+    - uptime.c         : Comando para estadísticas del sistema
+    - ps.c             : Comando para listar procesos
+    - lsx.c            : Comando para listado extendido de archivos
+    - syscount.c       : Comando para consultar contadores
+
+  Archivos de Cabecera (nuevos/modificados):
+    - sysinfo.h        : Estructuras para información del sistema
+
+  Documentación:
+    - README           : Este archivo
+    - informe.md       : Informe técnico completo y detallado
+
+DOCUMENTACIÓN ADICIONAL:
+
+  Para información técnica detallada sobre la implementación, diseño,
+  decisiones técnicas y fragmentos de código comentados, consultar:
+  
+    informe.md
+
+  El informe incluye:
+  - Introducción y objetivos del proyecto
+  - Descripción detallada de cada módulo implementado
+  - Fragmentos de código relevantes con comentarios extensos
+  - Análisis de decisiones de diseño y trade-offs
+  - Desafíos técnicos enfrentados y soluciones
+  - Conclusiones técnicas y aprendizajes
+  - Limitaciones y trabajo futuro
+
+INFORMACIÓN DEL PROYECTO:
+
+  Curso:         Sistemas Operativos
+  Fecha:         Diciembre 2025
+  Base:          xv6 (MIT PDOS)
+  Arquitectura:  x86 (32-bit)
+  Lenguaje:      C y Assembly
+
+================================================================================
+
+================================================================================
 ENTREGABLE 1: INSTRUMENTACIÓN DE LLAMADAS AL SISTEMA
 ================================================================================
 
