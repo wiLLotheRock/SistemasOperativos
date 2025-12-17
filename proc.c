@@ -112,6 +112,9 @@ found:
   memset(p->context, 0, sizeof *p->context);
   p->context->eip = (uint)forkret;
 
+  // Inicializar trace_syscalls a 0 (desactivado por defecto)
+  p->trace_syscalls = 0;
+
   return p;
 }
 
@@ -209,6 +212,9 @@ fork(void)
   np->cwd = idup(curproc->cwd);
 
   safestrcpy(np->name, curproc->name, sizeof(curproc->name));
+
+  // NO heredar trace_syscalls - debe activarse explícitamente
+  np->trace_syscalls = 0;
 
   pid = np->pid;
 

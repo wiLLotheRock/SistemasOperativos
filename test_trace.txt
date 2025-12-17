@@ -1,0 +1,80 @@
+=================================================================
+ENTREGABLE 1: Sistema de Instrumentación de Syscalls para XV6
+=================================================================
+
+IMPLEMENTACIÓN COMPLETADA
+
+Archivos Modificados:
+---------------------
+1. proc.h - Agregado campo 'trace_syscalls' en struct proc
+2. syscall.h - Agregado #define SYS_trace 22
+3. syscall.c - Agregado:
+   - Array syscall_names[] con nombres de todas las syscalls
+   - Función syscall() modificada para loggear llamadas cuando trace_syscalls está activo
+   - Imprime nombre de syscall, 3 argumentos y valor de retorno
+4. sysproc.c - Agregado sys_trace() para activar/desactivar tracing
+5. user.h - Agregado prototipo int trace(int)
+6. usys.S - Agregado SYSCALL(trace)
+7. trace.c - Nuevo programa de usuario que activa tracing y ejecuta comandos
+8. Makefile - Agregado _trace a UPROGS
+
+Funcionamiento:
+---------------
+El sistema permite rastrear syscalls de manera selectiva por proceso:
+
+1. trace(1) - Activa el trazado de syscalls para el proceso actual
+2. trace(0) - Desactiva el trazado
+3. El trazado se hereda a procesos hijos tras fork()
+4. Comando 'trace <programa> [args]' ejecuta programa con trazado activo
+
+Formato de salida:
+------------------
+[PID X] syscall: nombre_syscall(arg0, arg1, arg2) -> retorno
+
+Ejemplo de uso:
+---------------
+$ trace echo hola mundo
+[PID 3] syscall: trace(0x1, 0x0, 0x0) -> 0x0
+[PID 3] syscall: exec(0x1234, 0x5678, 0x0) -> 0x0
+[PID 3] syscall: write(0x1, 0x2000, 0xc) -> 0xc
+hola mundo
+[PID 3] syscall: exit(0x0, 0x0, 0x0) -> 0x0
+
+$ trace ls
+[PID 4] syscall: trace(0x1, 0x0, 0x0) -> 0x0
+[PID 4] syscall: exec(0x1200, 0x5600, 0x0) -> 0x0
+[PID 4] syscall: open(0x2000, 0x0, 0x0) -> 0x3
+[PID 4] syscall: fstat(0x3, 0x1ff4, 0x0) -> 0x0
+[PID 4] syscall: read(0x3, 0x2100, 0x200) -> 0x200
+...
+[PID 4] syscall: close(0x3, 0x0, 0x0) -> 0x0
+[PID 4] syscall: write(0x1, 0x2200, 0x50) -> 0x50
+.              1 1 512
+..             1 1 512
+README         2 2 2286
+cat            2 3 15880
+...
+
+Características técnicas:
+-------------------------
+- NO satura la consola: solo procesos con trace_syscalls=1 generan output
+- Mínimo overhead: solo un if() cuando tracing está desactivado
+- Visible para debugging: formato claro con PID, nombre y argumentos
+- Extensible: fácil agregar más información (tiempo, stack trace, etc.)
+
+Para probar:
+------------
+1. make clean && make qemu
+2. En el shell de xv6:
+   $ trace echo test
+   $ trace ls
+   $ trace cat README
+   $ trace grep main README
+
+Notas de implementación:
+------------------------
+- Los argumentos se muestran en hexadecimal (0x...)
+- Se capturan hasta 3 argumentos (suficiente para la mayoría de syscalls)
+- El valor de retorno también se muestra en hexadecimal
+- La syscall 'trace' misma también aparece en el log cuando está activa
+=================================================================

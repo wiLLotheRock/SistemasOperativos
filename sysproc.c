@@ -89,3 +89,16 @@ sys_uptime(void)
   release(&tickslock);
   return xticks;
 }
+
+// Activa o desactiva el trazado de syscalls para el proceso actual
+int
+sys_trace(void)
+{
+  int enable;
+
+  if(argint(0, &enable) < 0)
+    return -1;
+  
+  myproc()->trace_syscalls = enable;
+  return 0;
+}
