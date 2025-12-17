@@ -24,7 +24,7 @@ main(int argc, char *argv[])
   num_procs = getprocs(procs, NPROC);
   
   if(num_procs < 0){
-    printf(2, "ps: error obteniendo información de procesos\n");
+    printf(2, "ps: error obteniendo informacion de procesos\n");
     exit();
   }
   

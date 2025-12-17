@@ -109,7 +109,7 @@ extern int sys_getprocs(void);
 extern int sys_syscount(void);
 
 // Contador global de invocaciones por syscall
-uint syscall_counts[25];  // Tamaño suficiente para todas las syscalls
+uint syscall_counts[25];  // Tamano suficiente para todas las syscalls
 
 // Nombres de las syscalls para el trazado
 static char *syscall_names[] = {
@@ -180,7 +180,7 @@ syscall(void)
     if(num < NELEM(syscall_counts))
       syscall_counts[num]++;
     
-    // Si el trazado está activo, imprimir información de la syscall
+    // Si el trazado esta activo, imprimir informacion de la syscall
     if(curproc->trace_syscalls) {
       // Obtener argumentos de la syscall (inicializados a 0 por si argint falla)
       int arg0 = 0, arg1 = 0, arg2 = 0;
@@ -196,7 +196,7 @@ syscall(void)
     
     curproc->tf->eax = syscalls[num]();
     
-    // Si el trazado está activo, imprimir el valor de retorno
+    // Si el trazado esta activo, imprimir el valor de retorno
     if(curproc->trace_syscalls) {
       cprintf(" -> 0x%x\n", curproc->tf->eax);
     }
@@ -221,7 +221,7 @@ getsysccount(int syscall_num, uint *count_ptr)
     return NELEM(syscall_counts);
   }
   
-  // Si es un número específico, validar y retornar ese contador
+  // Si es un numero especifico, validar y retornar ese contador
   if(syscall_num < 0 || syscall_num >= NELEM(syscall_counts))
     return -1;
   

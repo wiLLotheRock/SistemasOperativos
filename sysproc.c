@@ -104,7 +104,7 @@ sys_trace(void)
   return 0;
 }
 
-// Obtiene estadísticas del sistema
+// Obtiene estadisticas del sistema
 int
 sys_sysinfo(void)
 {
@@ -116,7 +116,7 @@ sys_sysinfo(void)
   return getsysinfo(info);
 }
 
-// Obtiene información de procesos
+// Obtiene informacion de procesos
 int
 sys_getprocs(void)
 {

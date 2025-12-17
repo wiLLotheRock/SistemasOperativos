@@ -43,12 +43,12 @@ main(int argc, char *argv[])
   int i;
   int total_calls = 0;
   
-  // Si recibe un parámetro, mostrar solo ese syscall
+  // Si recibe un parametro, mostrar solo ese syscall
   if(argc == 2) {
     syscall_num = atoi(argv[1]);
     
     if(syscall_num < 1 || syscall_num >= MAX_SYSCALLS) {
-      printf(2, "syscount: número de syscall inválido (debe estar entre 1 y %d)\n", 
+      printf(2, "syscount: numero de syscall invalido (debe estar entre 1 y %d)\n", 
              MAX_SYSCALLS - 1);
       exit();
     }
@@ -63,7 +63,7 @@ main(int argc, char *argv[])
            syscall_names[syscall_num] ? syscall_names[syscall_num] : "unknown",
            single_count);
   }
-  // Sin parámetros, mostrar resumen completo
+  // Sin parametros, mostrar resumen completo
   else if(argc == 1) {
     if(syscount(-1, counts) < 0) {
       printf(2, "syscount: error al obtener contadores\n");

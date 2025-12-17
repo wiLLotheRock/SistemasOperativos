@@ -215,7 +215,7 @@ fork(void)
 
   safestrcpy(np->name, curproc->name, sizeof(curproc->name));
 
-  // NO heredar trace_syscalls - debe activarse explícitamente
+  // NO heredar trace_syscalls - debe activarse explicitamente
   np->trace_syscalls = 0;
 
   pid = np->pid;
@@ -240,7 +240,7 @@ exit(void)
   int fd;
 
   if(curproc == initproc){
-    // DEBUG: Diagnóstico para identificar qué proceso está intentando salir
+    // DEBUG: Diagnostico para identificar que proceso esta intentando salir
     // Ayuda a distinguir si es "init" o "initcode" el que falla
     cprintf("init exiting: pid=%d name=%s\n", curproc->pid, curproc->name);
     panic("init exiting");
