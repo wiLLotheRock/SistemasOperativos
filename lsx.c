@@ -79,7 +79,7 @@ lsx(char *path)
         printf(1, "lsx: cannot stat %s\n", buf);
         continue;
       }
-      printf(1, "%s  %-5d %-5d %-9d %s\n", 
+      printf(1, "%-4s  %-5d %-5d %-9d %s\n", 
              fmttype(st.type), st.ino, st.nlink, st.size, fmtname(buf));
     }
     break;
