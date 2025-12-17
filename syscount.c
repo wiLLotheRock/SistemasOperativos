@@ -76,7 +76,7 @@ main(int argc, char *argv[])
     
     for(i = 1; i < MAX_SYSCALLS; i++) {
       if(syscall_names[i] && counts[i] > 0) {
-        printf(1, "%-3d  %-16s  %d\n", i, syscall_names[i], counts[i]);
+        printf(1, "%d  %s  %d\n", i, syscall_names[i], counts[i]);
         total_calls += counts[i];
       }
     }
