@@ -34,6 +34,18 @@ char *syscall_names[] = {
 
 #define MAX_SYSCALLS 25
 
+// Imprime un string con padding a la derecha hasta width caracteres
+void
+printpad(int fd, char *s, int width)
+{
+  int len = strlen(s);
+  int i;
+  printf(fd, "%s", s);
+  for(i = len; i < width; i++) {
+    printf(fd, " ");
+  }
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -76,7 +88,12 @@ main(int argc, char *argv[])
     
     for(i = 1; i < MAX_SYSCALLS; i++) {
       if(syscall_names[i] && counts[i] > 0) {
-        printf(1, "%d  %s  %d\n", i, syscall_names[i], counts[i]);
+        printf(1, "%d", i);
+        if(i < 10) printf(1, "  ");
+        else printf(1, " ");
+        printf(1, " ");
+        printpad(1, syscall_names[i], 16);
+        printf(1, "  %d\n", counts[i]);
         total_calls += counts[i];
       }
     }
