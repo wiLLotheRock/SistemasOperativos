@@ -23,6 +23,7 @@ exec(char *path, char **argv)
 
   if((ip = namei(path)) == 0){
     end_op();
+    // DEBUG: Mensaje de diagnóstico para identificar archivos no encontrados durante exec()
     cprintf("exec: fail to find file %s\n", path);
     return -1;
   }
@@ -31,15 +32,18 @@ exec(char *path, char **argv)
 
   // Check ELF header
   if(readi(ip, (char*)&elf, 0, sizeof(elf)) != sizeof(elf)){
+    // DEBUG: Error al leer el encabezado ELF del ejecutable
     cprintf("exec: fail to read ELF header\n");
     goto bad;
   }
   if(elf.magic != ELF_MAGIC){
+    // DEBUG: El número mágico ELF es inválido (archivo no es un ejecutable ELF válido)
     cprintf("exec: bad ELF magic %x\n", elf.magic);
     goto bad;
   }
 
   if((pgdir = setupkvm()) == 0){
+    // DEBUG: Falló la configuración de la tabla de páginas del kernel
     cprintf("exec: setupkvm failed\n");
     goto bad;
   }
@@ -48,28 +52,35 @@ exec(char *path, char **argv)
   sz = 0;
   for(i=0, off=elf.phoff; i<elf.phnum; i++, off+=sizeof(ph)){
     if(readi(ip, (char*)&ph, off, sizeof(ph)) != sizeof(ph)){
+      // DEBUG: Error al leer el encabezado de programa (program header) del ELF
       cprintf("exec: readi phdr failed\n");
       goto bad;
     }
     if(ph.type != ELF_PROG_LOAD)
       continue;
     if(ph.memsz < ph.filesz){
+      // DEBUG: Tamaño en memoria menor que tamaño en archivo (ELF malformado)
       cprintf("exec: ph.memsz < ph.filesz\n");
       goto bad;
     }
     if(ph.vaddr + ph.memsz < ph.vaddr){
+      // DEBUG: Desbordamiento aritmético en la dirección virtual
       cprintf("exec: ph.vaddr overflow\n");
       goto bad;
     }
     if((sz = allocuvm(pgdir, sz, ph.vaddr + ph.memsz)) == 0){
+      // DEBUG: Falló la asignación de memoria virtual para el proceso
       cprintf("exec: allocuvm failed\n");
       goto bad;
     }
     if(ph.vaddr % PGSIZE != 0){
+      // DEBUG: CRÍTICO - Dirección virtual no alineada a página (4KB)
+      // Este error ocurre cuando .note.gnu.property causa direcciones no alineadas
       cprintf("exec: ph.vaddr %x not aligned to PGSIZE %x\n", ph.vaddr, PGSIZE);
       goto bad;
     }
     if(loaduvm(pgdir, (char*)ph.vaddr, ip, ph.off, ph.filesz) < 0){
+      // DEBUG: Falló la carga del segmento del programa en memoria
       cprintf("exec: loaduvm failed\n");
       goto bad;
     }
@@ -122,6 +133,7 @@ exec(char *path, char **argv)
   return 0;
 
  bad:
+  // DEBUG: Marca general de error - exec() falló en algún punto de las validaciones anteriores
   cprintf("exec: failed at bad label\n");
   if(pgdir)
     freevm(pgdir);

@@ -232,6 +232,8 @@ exit(void)
   int fd;
 
   if(curproc == initproc){
+    // DEBUG: Diagnóstico para identificar qué proceso está intentando salir
+    // Ayuda a distinguir si es "init" o "initcode" el que falla
     cprintf("init exiting: pid=%d name=%s\n", curproc->pid, curproc->name);
     panic("init exiting");
   }
