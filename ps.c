@@ -28,15 +28,15 @@ main(int argc, char *argv[])
     exit();
   }
   
-  printf(1, "PID\tSTATE\t\tSIZE\tNAME\n");
-  printf(1, "---\t-----\t\t----\t----\n");
+  printf(1, "PID  STATE      SIZE    NAME\n");
+  printf(1, "---  -----      ----    ----\n");
   
   for(i = 0; i < num_procs; i++){
     char *state = "unknown";
     if(procs[i].state >= 0 && procs[i].state < 6)
       state = states[procs[i].state];
       
-    printf(1, "%d\t%s\t\t%d\t%s\n", 
+    printf(1, "%d  %s  %d  %s\n", 
            procs[i].pid, 
            state, 
            procs[i].sz, 
