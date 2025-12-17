@@ -1,51 +1,121 @@
-NOTE: we have stopped maintaining the x86 version of xv6, and switched
-our efforts to the RISC-V version
-(https://github.com/mit-pdos/xv6-riscv.git)
 
-xv6 is a re-implementation of Dennis Ritchie's and Ken Thompson's Unix
-Version 6 (v6).  xv6 loosely follows the structure and style of v6,
-but is implemented for a modern x86-based multiprocessor using ANSI C.
 
-ACKNOWLEDGMENTS
+================================================================================
+ENTREGABLE 1: INSTRUMENTACIÓN DE LLAMADAS AL SISTEMA
+================================================================================
 
-xv6 is inspired by John Lions's Commentary on UNIX 6th Edition (Peer
-to Peer Communications; ISBN: 1-57398-013-7; 1st edition (June 14,
-2000)). See also https://pdos.csail.mit.edu/6.828/, which
-provides pointers to on-line resources for v6.
+DESCRIPCIÓN:
+Se ha implementado un sistema de trazado de syscalls que permite registrar
+y mostrar todas las llamadas al sistema que ejecuta un proceso, incluyendo
+el nombre de la syscall, sus argumentos y el valor de retorno.
 
-xv6 borrows code from the following sources:
-    JOS (asm.h, elf.h, mmu.h, bootasm.S, ide.c, console.c, and others)
-    Plan 9 (entryother.S, mp.h, mp.c, lapic.c)
-    FreeBSD (ioapic.c)
-    NetBSD (console.c)
+COMPILACIÓN:
+  make clean
+  make
 
-The following people have made contributions: Russ Cox (context switching,
-locking), Cliff Frey (MP), Xiao Yu (MP), Nickolai Zeldovich, and Austin
-Clements.
+EJECUCIÓN:
+  make qemu         # Modo gráfico (si QEMU tiene soporte VGA)
+  make qemu-nox     # Modo texto (recomendado para servidores sin X11)
 
-We are also grateful for the bug reports and patches contributed by Silas
-Boyd-Wickizer, Anton Burtsev, Cody Cutler, Mike CAT, Tej Chajed, eyalz800,
-Nelson Elhage, Saar Ettinger, Alice Ferrazzi, Nathaniel Filardo, Peter
-Froehlich, Yakir Goaron,Shivam Handa, Bryan Henry, Jim Huang, Alexander
-Kapshuk, Anders Kaseorg, kehao95, Wolfgang Keller, Eddie Kohler, Austin
-Liew, Imbar Marinescu, Yandong Mao, Matan Shabtay, Hitoshi Mitake, Carmi
-Merimovich, Mark Morrissey, mtasm, Joel Nider, Greg Price, Ayan Shafqat,
-Eldar Sehayek, Yongming Shen, Cam Tenny, tyfkda, Rafael Ubal, Warren
-Toomey, Stephen Tu, Pablo Ventura, Xi Wang, Keiichi Watanabe, Nicolas
-Wolovick, wxdao, Grant Wu, Jindong Zhang, Icenowy Zheng, and Zou Chang Wei.
+COMANDO DE USUARIO:
+  trace <comando> [argumentos...]
 
-The code in the files that constitute xv6 is
-Copyright 2006-2018 Frans Kaashoek, Robert Morris, and Russ Cox.
+  Ejecuta el comando especificado con trazado de syscalls activado.
+  Solo el comando ejecutado mostrará las syscalls, sin afectar otros procesos.
 
-ERROR REPORTS
+EJEMPLOS DE USO:
+  
+  $ trace echo hola
+  [PID 3] syscall: trace(0x1, 0x0, 0x0) -> 0x0
+  [PID 3] syscall: exec(0x2ff0, 0x2f20, 0x2) -> 0x0
+  [PID 3] syscall: write(0x1, 0x2f7f, 0x1)h -> 0x1
+  [PID 3] syscall: write(0x1, 0x2f7f, 0x1)o -> 0x1
+  [PID 3] syscall: write(0x1, 0x2f7f, 0x1)l -> 0x1
+  [PID 3] syscall: write(0x1, 0x2f7f, 0x1)a -> 0x1
+  [PID 3] syscall: write(0x1, 0x2f7f, 0x1)
+   -> 0x1
+  [PID 3] syscall: exit(0x0, 0x0, 0x2fdc)
+  hola
 
-We don't process error reports (see note on top of this file).
+  $ trace ls
+  [PID 4] syscall: trace(0x1, 0x0, 0x0) -> 0x0
+  [PID 4] syscall: exec(0x2ff0, 0x2f20, 0x2) -> 0x0
+  [PID 4] syscall: fstat(0x3, 0x2e30, 0x0) -> 0x0
+  [PID 4] syscall: read(0x3, 0xc000, 0x200) -> 0x200
+  [PID 4] syscall: write(0x1, 0x3f54, 0x2). -> 0x2
+  [PID 4] syscall: write(0x1, 0x3f54, 0x7)README -> 0x7
+  ...
+  [PID 4] syscall: exit(0x0, 0x0, 0x2e94)
+  .              1 1 512
+  ..             1 1 512
+  README         2 2 2227
+  ...
 
-BUILDING AND RUNNING XV6
+  $ trace cat README | head -5
+  [PID 5] syscall: trace(0x1, 0x0, 0x0) -> 0x0
+  [PID 5] syscall: exec(0x2ff0, 0x2f20, 0x2) -> 0x0
+  [PID 5] syscall: open(0x2f80, 0x0, 0x0) -> 0x3
+  [PID 5] syscall: read(0x3, 0xc000, 0x200) -> 0x200
+  [PID 5] syscall: write(0x1, 0xc000, 0x200) -> 0x200
+  ...
 
-To build xv6 on an x86 ELF machine (like Linux or FreeBSD), run
-"make". On non-x86 or non-ELF machines (like OS X, even on x86), you
-will need to install a cross-compiler gcc suite capable of producing
-x86 ELF binaries (see https://pdos.csail.mit.edu/6.828/).
-Then run "make TOOLPREFIX=i386-jos-elf-". Now install the QEMU PC
-simulator and run "make qemu".
+  $ trace grep xv6 README
+  [PID 6] syscall: trace(0x1, 0x0, 0x0) -> 0x0
+  [PID 6] syscall: exec(0x2ff0, 0x2f20, 0x2) -> 0x0
+  [PID 6] syscall: open(0x2f85, 0x0, 0x0) -> 0x3
+  [PID 6] syscall: read(0x3, 0x4e00, 0x200) -> 0x200
+  [PID 6] syscall: write(0x1, 0x3eb8, 0x5)xv6... -> 0x5
+  ...
+  xv6 is a re-implementation of Dennis Ritchie's...
+
+FORMATO DE SALIDA:
+  [PID N] syscall: nombre(arg0, arg1, arg2) -> retorno
+
+  - PID: Identificador del proceso
+  - nombre: Nombre de la syscall (fork, exec, read, write, etc.)
+  - arg0, arg1, arg2: Primeros tres argumentos en hexadecimal
+  - retorno: Valor de retorno en hexadecimal
+
+VERIFICACIÓN DE FUNCIONAMIENTO:
+  1. Ejecutar un comando CON trace:
+     $ trace echo test
+     Debe mostrar líneas de syscalls
+
+  2. Ejecutar un comando SIN trace:
+     $ echo test
+     NO debe mostrar líneas de syscalls
+
+  3. Verificar aislamiento:
+     $ trace ls
+     $ ls
+     Solo el primero debe mostrar syscalls
+
+SALIR DE QEMU:
+  - Presionar: Ctrl+A, luego X
+  - O cerrar la ventana del emulador
+
+ARCHIVOS MODIFICADOS:
+  - proc.h         : Agregado campo trace_syscalls
+  - syscall.h      : Definido SYS_trace
+  - syscall.c      : Implementado logging de syscalls
+  - sysproc.c      : Implementado sys_trace()
+  - proc.c         : Inicialización de trace_syscalls
+  - user.h         : Prototipo de trace()
+  - usys.S         : Stub de ensamblador
+  - trace.c        : Programa de usuario (NUEVO)
+  - Makefile       : Agregado _trace a UPROGS
+
+SYSCALL IMPLEMENTADA:
+  int trace(int enable)
+  - enable=1: Activa el trazado para el proceso actual
+  - enable=0: Desactiva el trazado
+  - Retorna 0 en éxito, -1 en error
+
+CARACTERÍSTICAS:
+  ✓ Trazado por proceso (no global)
+  ✓ No se hereda en fork()
+  ✓ Se preserva en exec()
+  ✓ Muestra nombre, argumentos y retorno
+  ✓ No afecta el funcionamiento normal del sistema
+
+================================================================================
